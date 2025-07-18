@@ -1,1 +1,1203 @@
-..
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local lp = Players.LocalPlayer
+local LocalPlayer = lp
+local player = lp
+local character = lp.Character or lp.CharacterAdded:Wait()
+local Character = character
+local backpack = player:WaitForChild("Backpack")
+local player = game.Players.LocalPlayer
+local Workspace = game:GetService("Workspace")
+
+--get brainrots
+local brainrots = {
+    'Noobini Pizzanini',
+    'Lirili Larila',
+    'Tim Cheese',
+    'Fluri Flura',
+    'Talpa Di Fero',
+    'Svinina Bombardino',
+    'Pipi Kiwi',
+    'Trippi Troppi',
+    'Tung Tung Tung Sahur',
+    'Gangster Footera',
+    'Boneca Ambalabu',
+    'Ta Ta Ta Ta Sahur',
+    'Trac Trac Baraboom',
+    'Cappuccino Assassino',
+    'Brr Brr Patapim',
+    'Trulimero Trulicina',
+    'Bambini Crostini',
+    'Bananita Dolphinita',
+    'Perochello Lemonchello',
+    'Brri Brri Bicus Dicus Bombicus',
+    'Burbaloni Loliloli',
+    'Chimpanzini Bananini',
+    'Ballerina Cappuccina',
+    'Chef Crabracadabra',
+    'Glorbo Fruttodrillo',
+    'Blueberrinni Octopusini',
+    'Frigo Camelo',
+    'Orangutini Ananassini',
+    'Rhino Toasterino',
+    'Bombardiro Crocodilo',
+    'Bombombini Gusini',
+    'Cocofanto Elefanto',
+    'Nyan Cat',
+    'Girafa Celestre',
+    'Tralalero Tralala',
+    'Matteo',
+    'Odin Din Din Dun',
+    'Trenostruzzo Turbo 3000',
+    'La Vacca Saturno Saturnita',
+    'Los Tralaleritos',
+    'Graipuss Medussi',
+    'La Grande Combinasion',
+}
+
+local options = {
+    autolock = false,
+    autocollect = false,
+    autocollectime = 70,
+    autocollectt,
+    currentspeed = 0,
+    antiHitActive = false,
+    autoStealActive = false,
+    teleporting = false 
+}
+
+local items = {
+    -- Slap Weapons
+    { Name = 'Slap', ID = 'Basic Slap' },
+    { Name = 'Iron Slap', ID = 'Iron Slap' },
+    { Name = 'Gold Slap', ID = 'Gold Slap' },
+    { Name = 'Diamond Slap', ID = 'Diamond Slap' },
+    { Name = 'Emerald Slap', ID = 'Emerald Slap' },
+    { Name = 'Ruby Slap', ID = 'Ruby Slap' },
+    { Name = 'Dark Matter Slap', ID = 'Dark Matter Slap' },
+    { Name = 'Flame Slap', ID = 'Flame Slap' },
+    { Name = 'Nuclear Slap', ID = 'Nuclear Slap' },
+    { Name = 'Galaxy Slap', ID = 'Galaxy Slap' },
+    -- Special Items
+    { Name = 'Trap', ID = 'Trap' },
+    { Name = 'Bee Launcher', ID = 'Bee Launcher' },
+    { Name = 'Rage Table', ID = 'Rage Table' },
+    { Name = 'Grapple Hook', ID = 'Grapple Hook' },
+    { Name = 'Taser Gun', ID = 'Taser Gun' },
+    { Name = 'Boogie Bomb', ID = 'Boogie Bomb' },
+    { Name = "Medusa's Head", ID = "Medusa's Head" },
+    { Name = 'Web Slinger', ID = 'Web Slinger' },
+    { Name = 'Quantum Cloner', ID = 'Quantum Cloner' },
+    { Name = 'All Seeing Sentry', ID = 'All Seeing Sentry' },
+    { Name = 'Laser Cape', ID = 'Laser Cape' },
+    -- Movement Items
+    { Name = 'Speed Coil', ID = 'Speed Coil' },
+    { Name = 'Gravity Coil', ID = 'Gravity Coil' },
+    { Name = 'Coil Combo', ID = 'Coil Combo' },
+    { Name = 'Invisibility Cloak', ID = 'Invisibility Cloak' },
+}
+
+function sSpeed(character)
+    local hum = character:WaitForChild('Humanoid')
+    local hb = game:GetService('RunService').Heartbeat
+    task.spawn(function()
+        while character and hum and hum.Parent do
+            if options.currentspeed > 0 and hum.MoveDirection.Magnitude > 0 then
+                local delta = hb:Wait()
+                character:TranslateBy(
+                    hum.MoveDirection * options.currentspeed * delta * 10
+                )
+            end
+            task.wait()
+        end
+    end)
+end
+
+function onCharacterAdded(character)
+    sSpeed(character)
+end
+
+player.CharacterAdded:Connect(onCharacterAdded)
+
+if player.Character then
+    onCharacterAdded(player.Character)
+end
+
+function create_billboard(name, adornee, size, text, color, y_offset)
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = name
+    billboard.Adornee = adornee
+    billboard.AlwaysOnTop = true
+    billboard.Size = size
+    billboard.StudsOffset = Vector3.new(0, y_offset or 3, 0)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 1, 0)
+    label.BackgroundTransparency = 1
+    label.TextScaled = true
+    label.Text = text
+    label.TextColor3 = color
+    label.TextStrokeColor3 = Color3.new(0, 0, 0)
+    label.TextStrokeTransparency = 0
+    label.Font = Enum.Font.SourceSansBold
+    label.Parent = billboard
+    return billboard
+end
+
+local things = {
+    players = {
+        state = false,
+        esp_instances = {},
+        update = function(self)
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer then
+                    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                    if self.state and hrp and not self.esp_instances[player] then
+                        local esp = create_billboard("esp_" .. player.Name, hrp, UDim2.new(0, 200, 0, 30), player.DisplayName, Color3.new(1, 1, 1))
+                        esp.Parent = hrp
+                        self.esp_instances[player] = esp
+                    elseif (not self.state or not hrp) and self.esp_instances[player] then
+                        self.esp_instances[player]:Destroy()
+                        self.esp_instances[player] = nil
+                    end
+                end
+            end
+        end
+    },
+    lock = {
+        state = false,
+        esp_instances = {},
+        update = function(self)
+            for _, plot in pairs(workspace.Plots:GetChildren()) do
+                local time_label = plot:FindFirstChild("RemainingTime", true)
+                local main_part = plot:FindFirstChild("Main", true)
+                if time_label and time_label:IsA("TextLabel") and main_part then
+                    local unlocked = time_label.Text == "0s"
+                    local label_text = unlocked and "Unlocked" or ("Lock: " .. time_label.Text)
+                    local color = unlocked and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 255, 0)
+                    if self.state then
+                        if not self.esp_instances[plot] then
+                            local esp = create_billboard("lock_esp", main_part, UDim2.new(0, 200, 0, 30), label_text, color)
+                            esp.Parent = plot
+                            self.esp_instances[plot] = esp
+                        else
+                            local label = self.esp_instances[plot]:FindFirstChildOfClass("TextLabel")
+                            if label then
+                                label.Text = label_text
+                                label.TextColor3 = color
+                            end
+                        end
+                    elseif self.esp_instances[plot] then
+                        self.esp_instances[plot]:Destroy()
+                        self.esp_instances[plot] = nil
+                    end
+                end
+            end
+        end
+    },
+    rarity = {
+        state = { legendary = false, mythic = false, ["brainrot god"] = false, secret = false },
+        esp_instances = {},
+        settings = {
+            legendary = { Color = Color3.fromRGB(255, 165, 0), Size = UDim2.new(0, 150, 0, 50) },
+            mythic = { Color = Color3.fromRGB(0, 191, 255), Size = UDim2.new(0, 150, 0, 50) },
+            ["brainrot god"] = { Color = Color3.fromRGB(138, 43, 226), Size = UDim2.new(0, 180, 0, 60) },
+            secret = { Color = Color3.fromRGB(105, 105, 105), Size = UDim2.new(0, 200, 0, 70) },
+        },
+        update = function(self)
+            for model in pairs(self.esp_instances) do
+                if not model:IsDescendantOf(workspace.Plots) then
+                    self.esp_instances[model]:Destroy()
+                    self.esp_instances[model] = nil
+                end
+            end
+            for _, plot in pairs(workspace.Plots:GetChildren()) do
+                for _, child in pairs(plot:GetDescendants()) do
+                    if child:IsA("TextLabel") then
+                        local rarity_name = child.Text:lower()
+                        local settings = self.settings[rarity_name]
+                        if settings and self.state[rarity_name] then
+                            local model = child:FindFirstAncestorWhichIsA("Model")
+                            if model and not self.esp_instances[model] then
+                                local display = child.Parent:FindFirstChild("DisplayName")
+                                local text = display and display.Text or child.Text
+                                local adornee = model.PrimaryPart or model:FindFirstChildWhichIsA("BasePart")
+                                if adornee then
+                                    local esp = create_billboard("esp_" .. rarity_name, adornee, settings.Size, text, settings.Color)
+                                    esp.Parent = model
+                                    self.esp_instances[model] = esp
+                                end
+                            elseif model and not self.state[rarity_name] and self.esp_instances[model] then
+                                self.esp_instances[model]:Destroy()
+                                self.esp_instances[model] = nil
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    }
+}
+
+function getbase()
+    for _, plot in pairs(workspace.Plots:GetChildren()) do
+        local yourBase = plot:FindFirstChild('YourBase', true)
+        if yourBase and yourBase.Enabled then
+            return plot
+        end
+    end
+    return nil
+end
+
+function gotobase(base)
+    local hitbox = base:FindFirstChild('Hitbox', true)
+    if not hitbox then
+        return
+    end
+    local humanoid = character:WaitForChild('Humanoid', 2)
+    local rootPart = character:WaitForChild('HumanoidRootPart', 2)
+    if not humanoid or not rootPart then
+        return
+    end
+    humanoid:MoveTo(hitbox.Position + Vector3.new(0, 5, 0))
+    repeat
+        task.wait(0.1)
+    until (rootPart.Position - hitbox.Position).Magnitude <= 5
+        or not options.autolock
+    if options.autolock then
+        humanoid.Jump = true
+        task.wait(0.1)
+        humanoid.Jump = true
+    end
+end
+
+function gotomoney()
+    local base = getbase()
+    if not base then
+        return false
+    end
+    character = LocalPlayer.Character
+    if not character then
+        return false
+    end
+    local humanoid = character:FindFirstChild("Humanoid")
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not humanoid or not root then
+        return false
+    end
+    local hitboxes = {}
+    for _, part in ipairs(base:GetDescendants()) do
+        if part.Name == "Hitbox" and part:IsA("BasePart") then
+            table.insert(hitboxes, part)
+        end
+    end
+    for _, hitbox in ipairs(hitboxes) do
+        if not options.autocollect then
+            break
+        end
+        humanoid:MoveTo(hitbox.Position)
+        repeat
+            task.wait(0.1)
+        until (root.Position - hitbox.Position).Magnitude <= 3 or not options.autocollect
+        if not options.autocollect then
+            break
+        end
+    end
+    return true
+end
+
+local WindUI = loadstring(
+    game:HttpGet(
+        'https://raw.githubusercontent.com/RONIX-HUB/WIND-LIB/refs/heads/main/message%20(7).txt',
+        true
+    )
+)()
+
+local Window = WindUI:IBETYOUCAN32423not9LOLBROrandom({
+    Title = 'Ronix Hub',
+    Icon = 'rbxassetid://136256350192953',
+    IconThemed = false,
+    Author = 'Developers - bdokkx.xyz - zyn',
+    Folder = 'CloudHub',
+    Size = UDim2.fromOffset(300, 300),
+    Transparent = true,
+    Theme = 'Violet',
+    User = {
+        Enabled = true,
+        Callback = function()
+            print('clicked')
+        end,
+        Anonymous = true,
+    },
+    SideBarWidth = 200,
+    ScrollBarEnabled = true,
+})
+
+local id = '136256350192953'
+local CoreGui = game:GetService('CoreGui')
+
+for _, obj in pairs(CoreGui:GetDescendants()) do
+    if obj:IsA('ImageLabel') and obj.Image:find(id) then
+        obj.Size = UDim2.new(2, 0, 2, 0)
+        obj.Position = UDim2.new(-0.4, 0, -0.3, 0)
+    end
+end
+
+Window:CreateTopbarButton('Join Discord', 'clipboard-copy', function()
+    setclipboard('discord.gg/ronix')
+end, 100)
+
+Window:EditOpenButton({
+    Title = 'Open Example UI',
+    Icon = 'monitor',
+    CornerRadius = UDim.new(0, 16),
+    StrokeThickness = 2,
+    Color = ColorSequence.new(
+        Color3.fromHex('FF0F7B'),
+        Color3.fromHex('F89B29')
+    ),
+    Draggable = true,
+})
+
+local Tabs = {}
+
+do
+    Tabs.ElementsSection = Window:Section({
+        Title = 'Main',
+        Opened = true,
+    })
+    Tabs.ParagraphTab = Tabs.ElementsSection:Tab({
+        Title = 'Home',
+        Icon = 'house',
+    })
+    Tabs.Tests = Tabs.ElementsSection:Tab({
+        Title = 'Shop',
+        Icon = 'shopping-basket',
+        Desc = '',
+    })
+    Tabs.Visuals = Tabs.ElementsSection:Tab({
+        Title = 'Visuals',
+        Icon = 'square-user-round',
+        Desc = '',
+    })
+    Tabs.ElementsSection = Window:Section({
+        Title = 'Auto',
+        Opened = true,
+    })
+    Tabs.StealerSection = Tabs.ElementsSection:Tab({
+        Title = 'AutoFarm',
+        Icon = 'refresh-ccw',
+        Desc = '',
+    })
+    Tabs.BaseSection = Tabs.ElementsSection:Tab({
+        Title = 'Base',
+        Icon = 'warehouse',
+        Desc = '',
+    })
+    Tabs.PlayerSection = Window:Section({
+        Title = 'Player',
+        Opened = true,
+    })
+    Tabs.PlayerFun = Tabs.PlayerSection:Tab({
+        Title = 'LocalPlayer',
+        Icon = 'user',
+        Desc = '',
+    })
+    Tabs.SettingsSection = Window:Section({
+        Title = 'Settings',
+        Opened = true,
+    })
+    Tabs.Settings = Tabs.SettingsSection:Tab({
+        Title = 'Settings',
+        Icon = 'settings',
+        Desc = '',
+    })
+    Tabs.MiscSection = Window:Section({
+        Title = "Misc",
+        Opened = true,
+    })
+    Tabs.MiscTab = Tabs.MiscSection:Tab({
+        Title = "Misc Functions",
+        Icon = "settings",
+        Desc = "",
+    })
+    Tabs.SkyPlatformSection = Window:Section({
+        Title = "Sky Platform",
+        Opened = true,
+    })
+    Tabs.SkyPlatformTab = Tabs.SkyPlatformSection:Tab({
+        Title = "Sky Platform",
+        Icon = "cloud",
+        Desc = "Teleport to the sky and remove platforms",
+    })
+end
+
+Window:SelectTab(1)
+
+Tabs.ParagraphTab:Paragraph({
+    Title = 'Join Our Community',
+    Desc = 'discord.gg/ronix',
+    Image = 'rbxassetid://136256350192953',
+    ImageSize = 42,
+    Thumbnail = 'rbxassetid://82781823824655',
+    ThumbnailSize = 250,
+})
+
+Tabs.ParagraphTab:Button({
+    Title = 'Join Discord Server',
+    Desc = '',
+    Callback = function()
+        print('Button Clicked!')
+    end,
+})
+
+Tabs.ParagraphTab:Divider()
+
+local InviteCode = '6znG9PwBzx'
+local DiscordAPI = 'https://discord.com/api/v10/invites/' .. InviteCode .. '?with_counts=true&with_expiration=true'
+local HttpService = game:GetService('HttpService')
+
+function fetchDiscordInfo()
+    local success, result = pcall(function()
+        return HttpService:JSONDecode(WindUI.Creator.Request({
+            Url = DiscordAPI,
+            Method = 'GET',
+            Headers = {
+                ['User-Agent'] = 'RobloxBot/1.0',
+                ['Accept'] = 'application/json',
+            },
+        }).Body)
+    end)
+    return success and result or nil
+end
+
+local Response = fetchDiscordInfo()
+
+if Response and Response.guild then
+    local function formatDescription(res)
+        return ' • Member Count : ' .. tostring(res.approximate_member_count)
+            .. '\n • Online Count : ' .. tostring(res.approximate_presence_count)
+    end
+    local DiscordInfo = Tabs.ParagraphTab:Paragraph({
+        Title = Response.guild.name,
+        Desc = formatDescription(Response),
+        Image = 'rbxassetid://136256350192953',
+        ImageSize = 42,
+    })
+else
+    Tabs.Tests:Paragraph({
+        Title = 'Error when receiving information about the Discord server',
+        Desc = HttpService:JSONEncode(Response),
+        Image = 'triangle-alert',
+        ImageSize = 26,
+        Color = 'Red',
+    })
+end
+
+local itemNames = {}
+for _, item in ipairs(items) do
+    table.insert(itemNames, item.Name)
+end
+
+local Dropdown = Tabs.Tests:Dropdown({
+    Title = 'Buy Item',
+    Values = itemNames,
+    Value = itemNames[1],
+    Callback = function(selectedName)
+        local itemID
+        for _, item in ipairs(items) do
+            if item.Name == selectedName then
+                itemID = item.ID
+                break
+            end
+        end
+        if itemID then
+            game:GetService('ReplicatedStorage'):WaitForChild('Packages'):WaitForChild('Net'):WaitForChild('RF/CoinsShopService/RequestBuy'):InvokeServer(itemID)
+        else
+            warn('Item not found:', selectedName)
+        end
+    end,
+})
+
+Tabs.Tests:Button({
+    Title = 'Spin Wheel',
+    Desc = '',
+    Callback = function()
+        game:GetService('ReplicatedStorage'):WaitForChild('Packages'):WaitForChild('Net'):WaitForChild('RE/RainbowSpinWheelService/Spin'):FireServer()
+    end,
+})
+
+Tabs.Tests:Button({
+    Title = 'Use Rainbow Machine',
+    Desc = 'must have item in hand',
+    Callback = function()
+        game:GetService("ReplicatedStorage"):WaitForChild("Packages"):WaitForChild("Net"):WaitForChild("RE/RainbowEventService/Delivery"):FireServer()
+    end
+})
+
+Tabs.PlayerFun:Button({
+    Title = 'Bypass Speed Anti-Cheat',
+    Desc = 'removes speed anti cheat',
+    Callback = function()
+        local args = { 'Speed Coil', }
+        game:GetService('ReplicatedStorage'):WaitForChild('Packages'):WaitForChild('Net'):WaitForChild('RF/CoinsShopService/RequestBuy'):InvokeServer(unpack(args))
+        game.Players.LocalPlayer.Character.Humanoid:EquipTool(game:GetService('Players').LocalPlayer.Backpack['Speed Coil'])
+        wait(0.5)
+        game.Players.LocalPlayer.Character.Humanoid:UnequipTools()
+        game.Players.LocalPlayer.Backpack['Speed Coil']:Destroy()
+    end,
+})
+
+Tabs.PlayerFun:Slider({
+    Title = 'Speed Boost',
+    Step = 1,
+    Value = {
+        Min = 0,
+        Max = 6,
+        Default = 0,
+    },
+    Callback = function(value)
+        options.currentspeed = tonumber(value) or 0
+    end,
+})
+
+Tabs.BaseSection:Toggle({
+    Title = 'Auto Lock Base',
+    Desc = 'Auto locks base',
+    Icon = 'bird',
+    Type = 'Checkbox',
+    Default = false,
+    Callback = function(state)
+        options.autolock = state
+        local lastTime = ''
+        if state then
+            local humanoid = player.Character and player.Character:FindFirstChildOfClass('Humanoid')
+            if humanoid then
+                humanoid.Health = 0
+            end
+            task.spawn(function()
+                while options.autolock do
+                    local base = getbase()
+                    if base then
+                        local label = base:FindFirstChild('RemainingTime', true)
+                        if label and label:IsA('TextLabel') then
+                            local currentText = label.Text
+                            if currentText == '0s' then
+                                local character = player.Character or player.CharacterAdded:Wait()
+                                local humanoid = character:FindFirstChildOfClass('Humanoid')
+                                if humanoid then
+                                    local startTime = tick()
+                                    while tick() - startTime < 3 and options.autolock and label.Text == '0s' do
+                                        humanoid.Jump = true
+                                        task.wait(0.1)
+                                    end
+                                end
+                                lastTime = currentText
+                            elseif currentText == '1s' then
+                                if currentText ~= lastTime then
+                                    lastTime = currentText
+                                    gotobase(base)
+                                end
+                            else
+                                lastTime = ''
+                            end
+                        end
+                    end
+                    task.wait(1)
+                end
+            end)
+        end
+    end,
+})
+
+Tabs.BaseSection:Toggle({
+    Title = "Auto Collect",
+    Desc = "Auto collects money tip use 21 its the best",
+    Icon = "bird",
+    Type = "Checkbox",
+    Default = false,
+    Callback = function(state)
+        options.autocollect = state
+        if state then
+            options.autocollectt = task.spawn(function()
+                while options.autocollect do
+                    local success = gotomoney()
+                    if not success then
+                        task.wait(1)
+                    else
+                        task.wait(options.autocollectime)
+                        if not options.autocollect then
+                            break
+                        end
+                        local char = LocalPlayer.Character
+                        local humanoid = char and char:FindFirstChild("Humanoid")
+                        if humanoid then
+                            humanoid.Health = 0
+                            LocalPlayer.CharacterAdded:Wait()
+                        else
+                            task.wait(5)
+                        end
+                    end
+                end
+            end)
+        else
+            options.autocollectt = nil
+        end
+    end,
+})
+
+Tabs.BaseSection:Section({
+    Title = 'Configuration',
+    TextXAlignment = 'Left',
+    TextSize = 17,
+})
+
+Tabs.BaseSection:Slider({
+    Title = 'Auto Collect Every (secs)',
+    Step = 1,
+    Value = {
+        Min = 1,
+        Max = 120,
+        Default = 70,
+    },
+    Callback = function(value)
+        options.autocollectime = value
+    end,
+})
+
+local autoFarm = false
+local selectedBrainrots = {}
+local isWalking = false
+
+function getcloset()
+    local closestAnimal, closestRoot, closestDist = nil, nil, math.huge
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return nil end
+    for _, animal in pairs(workspace:WaitForChild("MovingAnimals"):GetChildren()) do
+        local rootPart = animal:FindFirstChild("HumanoidRootPart")
+        if rootPart then
+            local info = rootPart:FindFirstChild("Info")
+            if info then
+                local overhead = info:FindFirstChild("AnimalOverhead")
+                if overhead then
+                    local displayName = overhead:FindFirstChild("DisplayName")
+                    if displayName and displayName:IsA("TextLabel") then
+                        if table.find(selectedBrainrots, displayName.Text) then
+                            local dist = (hrp.Position - rootPart.Position).Magnitude
+                            if dist < closestDist then
+                                closestDist = dist
+                                closestAnimal = animal
+                                closestRoot = rootPart
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return closestAnimal, closestRoot
+end
+
+function callprompt(model)
+    local rootPart = model:FindFirstChild("HumanoidRootPart")
+    if not rootPart then return end
+    local promptAttachment = rootPart:FindFirstChild("PromptAttachment")
+    if promptAttachment then
+        local prompt = promptAttachment:FindFirstChildWhichIsA("ProximityPrompt")
+        if prompt and prompt.Enabled then
+            fireproximityprompt(prompt)
+        end
+    end
+end
+
+task.spawn(function()
+    while true do
+        task.wait(0.05)
+        if autoFarm and not isWalking then
+            local character = player.Character or player.CharacterAdded:Wait()
+            local hrp = character and character:FindFirstChild("HumanoidRootPart")
+            local humanoid = character and character:FindFirstChildOfClass("Humanoid")
+            if not hrp or not humanoid then continue end
+            local originalSpeed = humanoid.WalkSpeed
+            humanoid.WalkSpeed = 32
+            local targetModel, targetPart = getcloset()
+            if targetModel and targetPart then
+                isWalking = true
+                while (hrp.Position - targetPart.Position).Magnitude > 3 and autoFarm do
+                    if not targetModel.Parent then break end
+                    humanoid:MoveTo(targetPart.Position)
+                    task.wait(0.1)
+                    if humanoid:GetState() == Enum.HumanoidStateType.RunningNoPhysics then
+                        humanoid.Jump = true
+                    end
+                    local newTargetModel, newTargetPart = getcloset()
+                    if newTargetModel ~= targetModel then
+                        targetModel, targetPart = newTargetModel, newTargetPart
+                    end
+                end
+                humanoid:MoveTo(hrp.Position)
+                callprompt(targetModel)
+                task.wait(0.3)
+                isWalking = false
+            end
+            humanoid.WalkSpeed = originalSpeed
+        end
+    end
+end)
+
+Tabs.StealerSection:Toggle({
+    Title = 'Auto Farm Brainrots',
+    Desc = 'Walks to selected animals and collects them',
+    Default = false,
+    Callback = function(state)
+        autoFarm = state
+    end,
+})
+
+Tabs.StealerSection:Dropdown({
+    Title = 'Select Brainrots',
+    Values = brainrots,
+    Multi = true,
+    Callback = function(selection)
+        selectedBrainrots = selection
+    end,
+})
+
+local toggles_order = {
+    "players",
+    "lock",
+    "legendary",
+    "mythic",
+    "brainrot god",
+    "secret",
+}
+
+for _, toggle_name in ipairs(toggles_order) do
+    Tabs.Visuals:Toggle({
+        Title = toggle_name:gsub("^%l", string.upper),
+        Default = false,
+        Callback = function(state)
+            if toggle_name == "players" or toggle_name == "lock" then
+                things[toggle_name].state = state
+                things[toggle_name]:update()
+            else
+                things.rarity.state[toggle_name] = state
+                things.rarity:update()
+            end
+        end
+    })
+end
+
+RunService.RenderStepped:Connect(function()
+    if things.players.state then
+        things.players:update()
+    end
+    if things.lock.state then
+        things.lock:update()
+    end
+    local any_rarity = false
+    for _, enabled in pairs(things.rarity.state) do
+        if enabled then
+            any_rarity = true
+            break
+        end
+    end
+    if any_rarity then
+        things.rarity:update()
+    else
+        for model, esp in pairs(things.rarity.esp_instances) do
+            esp:Destroy()
+            things.rarity.esp_instances[model] = nil
+        end
+    end
+end)
+
+local paragraph = Tabs.Settings:Paragraph({
+    Title = "Loading...",
+    Desc = player.Name .. " FPS",
+})
+
+task.spawn(function()
+    local lastTime = tick()
+    local frameCount = 0
+    while true do
+        frameCount += 1
+        local now = tick()
+        if now - lastTime >= 1 then
+            paragraph:SetTitle("FPS: " .. frameCount)
+            frameCount = 0
+            lastTime = now
+        end
+        RunService.Heartbeat:Wait()
+    end
+end)
+
+Tabs.Settings:Toggle({
+    Title = 'Uncap FPS',
+    Desc = 'uncaps your fps',
+    Icon = 'zap',
+    Type = 'Checkbox',
+    Default = false,
+    Callback = function(state)
+        if setfpscap then
+            if state then
+                setfpscap(1000)
+            else
+                setfpscap(120)
+            end
+        end
+    end,
+})
+
+local mapModel = nil
+local targetPart = nil
+local savedPartClone = nil
+
+local function getTargetPart()
+    if mapModel == nil then return nil end
+    if targetPart and targetPart.Parent == mapModel then
+        return targetPart
+    end
+    if #mapModel:GetChildren() >= 4 then
+        targetPart = mapModel:GetChildren()[4]
+        return targetPart
+    end
+    return nil
+end
+
+pcall(function()
+    mapModel = workspace:WaitForChild("Map", 30):WaitForChild("Model", 30)
+    targetPart = getTargetPart()
+end)
+
+Tabs.SkyPlatformTab:Button({
+    Title = "Teleport to Sky",
+    Desc = "Teleports you high above the map",
+    Callback = function()
+        local localPlayer = game.Players.LocalPlayer
+        local char = localPlayer.Character
+        if not char or not char:FindFirstChild("HumanoidRootPart") then
+            WindUI:Notify({
+                Title = "Error",
+                Content = "Could not find your character.",
+                Duration = 3,
+            })
+            return
+        end
+        if mapModel and savedPartClone then
+            savedPartClone.Parent = mapModel
+            targetPart = savedPartClone
+            savedPartClone = nil
+            WindUI:Notify({
+                Title = "Platform",
+                Content = "Platform restored.",
+                Duration = 3,
+            })
+        end
+        local hrp = char.HumanoidRootPart
+        local currentPos = hrp.Position
+        local destination = Vector3.new(currentPos.X, 200, currentPos.Z)
+        hrp.Anchored = true
+        task.wait(0.05)
+        hrp.CFrame = CFrame.new(destination)
+        task.wait(0.05)
+        hrp.Anchored = false
+        WindUI:Notify({
+            Title = "Teleport",
+            Content = "Teleported to Y = 200",
+            Duration = 3,
+        })
+    end,
+})
+
+Tabs.SkyPlatformTab:Button({
+    Title = "Remove Platform",
+    Desc = "Removes the platform below your position",
+    Callback = function()
+        if not mapModel then
+            WindUI:Notify({
+                Title = "Platform",
+                Content = "Map.Model not found.",
+                Duration = 4,
+            })
+            return
+        end
+        local part = getTargetPart()
+        if not part then
+            local waited = 0
+            while waited < 2 and not part do
+                task.wait(0.2)
+                waited += 0.2
+                part = getTargetPart()
+            end
+        end
+        if part and part.Parent then
+            savedPartClone = part:Clone()
+            part:Destroy()
+            targetPart = nil
+            WindUI:Notify({
+                Title = "Platform",
+                Content = "Platform removed.",
+                Duration = 3,
+            })
+        else
+            WindUI:Notify({
+                Title = "Platform",
+                Content = "Platform already removed or missing.",
+                Duration = 3,
+            })
+        end
+    end,
+})
+
+Tabs.SkyPlatformTab:Button({
+    Title = "Restore Platform",
+    Desc = "Restores the removed platform",
+    Callback = function()
+        if not mapModel then
+            WindUI:Notify({
+                Title = "Platform",
+                Content = "Map.Model not found.",
+                Duration = 3,
+            })
+            return
+        end
+        if savedPartClone then
+            savedPartClone.Parent = mapModel
+            targetPart = savedPartClone
+            savedPartClone = nil
+            WindUI:Notify({
+                Title = "Platform",
+                Content = "Platform restored.",
+                Duration = 3,
+            })
+        else
+            WindUI:Notify({
+                Title = "Platform",
+                Content = "No platform to restore.",
+                Duration = 3,
+            })
+        end
+    end,
+})
+
+Tabs.MiscTab:Button({
+    Title = 'Bypassed Noclip',
+    Desc = 'Stand in front of lasers then use to get in (sometimes more than once)',
+    Callback = function()
+        local RunService = game:GetService("RunService")
+        local Players = game:GetService("Players")
+        local Player = Players.LocalPlayer
+        local char, hrp
+        local teleporting = false
+        local random = Random.new()
+        local tpAmt = 70 
+        local function setupCharacter()
+            char = Player.Character or Player.CharacterAdded:Wait()
+            hrp = char:WaitForChild("HumanoidRootPart")
+        end
+        setupCharacter()
+        Player.CharacterAdded:Connect(setupCharacter)
+        task.spawn(function()
+            while true do
+                local ping = Player:GetNetworkPing() * 1000
+                tpAmt = math.clamp(math.floor(ping * 0.8), 10, 150)
+                RunService.Heartbeat:Wait()
+            end
+        end)
+        local function TP(position)
+            if not teleporting and hrp then
+                teleporting = true
+                hrp.CFrame = position + Vector3.new(
+                    random:NextNumber(-0.0001, 0.0001),
+                    random:NextNumber(-0.0001, 0.0001),
+                    random:NextNumber(-0.0001, 0.0001)
+                )
+                RunService.Heartbeat:Wait()
+                teleporting = false
+            end
+        end
+        local function TPInside()
+            if not hrp then
+                WindUI:Notify({
+                    Title = "Error",
+                    Content = "Character not found.",
+                    Duration = 3,
+                })
+                return
+            end
+            local TELEPORT_ITERATIONS = 85
+            local VOID_CFRAME = CFrame.new(0, -3e40, 0)
+            local currentCF = hrp.CFrame
+            local forwardVector = currentCF.LookVector
+            local targetPos = currentCF.Position + (forwardVector * 10)
+            local targetCF = CFrame.new(targetPos, targetPos + forwardVector)
+            for _ = 1, 3 do
+                task.spawn(function()
+                    for i = 1, TELEPORT_ITERATIONS do
+                        TP(targetCF)
+                        task.wait()
+                    end
+                    for _ = 1, 3 do
+                        TP(VOID_CFRAME)
+                        task.wait(0.1)
+                        TP(targetCF)
+                        task.wait(0.1)
+                    end
+                end)
+            end
+        end
+        TPInside()
+        WindUI:Notify({
+            Title = "Bypassed Noclip",
+            Content = "Teleporting inside successful!",
+            Duration = 3,
+        })
+    end,
+})
+
+local random = Random.new()
+local tpAmt = 70
+
+local function setupCharacter()
+    character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+    return hrp
+end
+
+task.spawn(function()
+    while true do
+        local ping = player:GetNetworkPing() * 1000
+        tpAmt = math.clamp(math.floor(ping * 0.8), 10, 150)
+        RunService.Heartbeat:Wait()
+    end
+end)
+
+local function TP(position)
+    local hrp = setupCharacter()
+    if not options.teleporting and hrp then
+        options.teleporting = true
+        hrp.CFrame = position + Vector3.new(
+            random:NextNumber(-0.0001, 0.0001),
+            random:NextNumber(-0.0001, 0.0001),
+            random:NextNumber(-0.0001, 0.0001)
+        )
+        RunService.Heartbeat:Wait()
+        options.teleporting = false
+    end
+end
+
+local function TPInside()
+    local hrp = setupCharacter()
+    if not hrp then return end
+    local currentCF = hrp.CFrame
+    local forwardVector = currentCF.LookVector
+    local targetPos = currentCF.Position + (forwardVector * 10)
+    local targetCF = CFrame.new(targetPos, targetPos + forwardVector)
+    for i = 1, tpAmt do
+        TP(targetCF)
+        task.wait()
+    end
+end
+
+Tabs.MiscTab:Toggle({
+    Title = 'Anti Hit (Outside)',
+    Desc = 'When coming near players teleports ur character up avoiding getting hit!',
+    Icon = 'shield',
+    Type = 'Checkbox',
+    Default = false,
+    Callback = function(state)
+        options.antiHitActive = state
+        if state then
+            local antiHitThread = task.spawn(function()
+                while options.antiHitActive do
+                    local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+                    if root then
+                        local close = false
+                        for _, plr in pairs(Players:GetPlayers()) do
+                            if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                                local otherRoot = plr.Character.HumanoidRootPart
+                                if (root.Position - otherRoot.Position).Magnitude <= 15 then
+                                    close = true
+                                    break
+                                end
+                            end
+                        end
+                        if close then
+                            root.CFrame = CFrame.new(root.Position + Vector3.new(0, 15, 0))
+                        end
+                    end
+                    RunService.RenderStepped:Wait()
+                end
+            end)
+        end
+    end,
+})
+
+local function findDeliverySpot()
+    for _, v in ipairs(Workspace.Plots:GetDescendants()) do
+        if v.Name == "DeliveryHitbox" and v.Parent:FindFirstChild("PlotSign") then
+            if v.Parent.PlotSign:FindFirstChild("YourBase") and v.Parent.PlotSign.YourBase.Enabled then
+                return v
+            end
+        end
+    end
+    return nil
+end
+
+local function TweenSteal()
+    local hrp = setupCharacter()
+    if not hrp then return end
+    local TELEPORT_ITERATIONS = 85
+    local VOID_CFRAME = CFrame.new(0, -3e40, 0)
+    local delivery = findDeliverySpot()
+    if not delivery then return end
+    local targetPos = delivery.CFrame * CFrame.new(0, random:NextInteger(-3, -1), 0)
+    for _ = 1, 3 do
+        task.spawn(function()
+            for i = 1, TELEPORT_ITERATIONS do
+                TP(targetPos)
+                task.wait()
+            end
+            for _ = 1, 3 do
+                TP(VOID_CFRAME)
+                task.wait(0.1)
+                TP(targetPos)
+                task.wait(0.1)
+            end
+        end)
+    end
+end
+
+Tabs.MiscTab:Toggle({
+    Title = 'Auto Steal',
+    Desc = 'Automatically steals holding brainrots (might have to press more than once)',
+    Icon = 'diamond',
+    Type = 'Checkbox',
+    Default = false,
+    Callback = function(state)
+        options.autoStealActive = state
+        if state then
+            local stealThread = task.spawn(function()
+                while options.autoStealActive do
+                    TweenSteal()
+                    task.wait(5)
+                end
+            end)
+        end
+    end,
+})
+
+local originalUnload = Window.OnClose
+Window:OnClose(function(...)
+    if mapModel and savedPartClone then
+        savedPartClone.Parent = mapModel
+        savedPartClone = nil
+        print("Sky Platform restored on unload.")
+    end
+    if originalUnload then
+        originalUnload(...)
+    end
+end)
